@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1f6f8b" />
+  <title>Communication Meter</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Life OS Module</p>
+        <h1>Communication Meter</h1>
+        <p class="subhead">Measure communication volume, density, and load without turning every interaction into a journal entry.</p>
+      </div>
+      <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle theme">☼</button>
+    </header>
+
+    <main>
+      <section class="panel today-panel">
+        <div class="today-top">
+          <div>
+            <p class="section-kicker">Today</p>
+            <h2 id="localDateLabel">—</h2>
+            <p id="timezoneLabel" class="muted">Local timezone</p>
+          </div>
+          <div class="battery-ring" aria-label="Communication battery">
+            <strong id="batteryValue">100%</strong>
+            <span>capacity</span>
+          </div>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card">
+            <span>Interactions</span>
+            <strong id="todayCount">0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Load</span>
+            <strong id="todayLoad">0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Minutes</span>
+            <strong id="todayMinutes">0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Density</span>
+            <strong id="todayDensity">0/hr</strong>
+          </article>
+        </div>
+
+        <div class="threshold-line">
+          <div class="threshold-copy">
+            <strong id="thresholdStatus">Quiet</strong>
+            <span id="thresholdNote">Communication load is currently light.</span>
+          </div>
+          <div class="meter-track"><div id="loadBar" class="meter-fill"></div></div>
+        </div>
+      </section>
+
+      <section class="panel quick-panel">
+        <div class="section-heading">
+          <h2>Quick Log</h2>
+          <p>Capture the interaction, not the full story.</p>
+        </div>
+
+        <form id="entryForm" class="entry-form">
+          <input type="hidden" id="entryId" />
+
+          <label class="field">
+            <span>Person / Stream</span>
+            <input id="person" type="text" list="peopleList" placeholder="Katz, Dad, Work, Dryden..." required />
+            <datalist id="peopleList">
+              <option value="Katz"></option>
+              <option value="Dad"></option>
+              <option value="Dryden"></option>
+              <option value="Work"></option>
+              <option value="Family"></option>
+              <option value="Friend"></option>
+            </datalist>
+          </label>
+
+          <div class="chip-group" role="group" aria-label="Channel">
+            <button type="button" data-channel="Text" class="chip selected">Text</button>
+            <button type="button" data-channel="In Person" class="chip">In Person</button>
+            <button type="button" data-channel="Phone" class="chip">Phone</button>
+            <button type="button" data-channel="Email" class="chip">Email</button>
+            <button type="button" data-channel="Group Chat" class="chip">Group</button>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>Duration</span>
+              <select id="durationBand">
+                <option value="1">&lt;1 min</option>
+                <option value="3">1–5 min</option>
+                <option value="10">5–15 min</option>
+                <option value="22">15–30 min</option>
+                <option value="45">30+ min</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Complexity</span>
+              <select id="complexity">
+                <option value="1">1 · Logistics</option>
+                <option value="2">2 · Routine</option>
+                <option value="3">3 · Moderate</option>
+                <option value="4">4 · Difficult</option>
+                <option value="5">5 · Intense</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Direction</span>
+              <select id="direction">
+                <option>Received</option>
+                <option>Sent</option>
+                <option>Back-and-forth</option>
+                <option>Observed</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>When</span>
+              <input id="time" type="time" />
+            </label>
+          </div>
+
+          <details class="optional-details">
+            <summary>Optional note</summary>
+            <label class="field">
+              <span>Short note</span>
+              <input id="note" type="text" maxlength="180" placeholder="Only if needed — keep it short." />
+            </label>
+          </details>
+
+          <div class="actions">
+            <button class="primary-btn" type="submit">Save Interaction</button>
+            <button id="resetBtn" class="secondary-btn" type="button">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <h2>Fast Add</h2>
+          <p>Use these when speed matters.</p>
+        </div>
+        <div class="preset-grid" id="presetGrid"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <h2>Breakdown</h2>
+          <p>Where today’s load is coming from.</p>
+        </div>
+        <div class="breakdown-grid">
+          <div>
+            <h3>By Person</h3>
+            <div id="personBreakdown" class="bar-list"></div>
+          </div>
+          <div>
+            <h3>By Channel</h3>
+            <div id="channelBreakdown" class="bar-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading row-heading">
+          <div>
+            <h2>Interaction Stream</h2>
+            <p id="entryCountLabel">0 entries today</p>
+          </div>
+          <select id="dateFilter" aria-label="Filter by day">
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+        <div id="entriesList" class="entries-list"></div>
+      </section>
+
+      <section class="panel data-panel">
+        <div class="section-heading">
+          <h2>Data</h2>
+          <p>Private, local, portable.</p>
+        </div>
+        <div class="actions wrap">
+          <button id="exportBtn" class="secondary-btn" type="button">Export JSON</button>
+          <label class="secondary-btn import-label">
+            Import JSON
+            <input id="importFile" type="file" accept="application/json,.json" hidden />
+          </label>
+          <button id="clearAllBtn" class="danger-btn" type="button">Clear All</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="entryTemplate">
+    <article class="entry-card">
+      <div class="entry-main">
+        <div>
+          <p class="entry-title"></p>
+          <p class="entry-meta"></p>
+          <p class="entry-note"></p>
+        </div>
+        <div class="score-pill"></div>
+      </div>
+      <div class="entry-actions">
+        <button class="ghost-btn edit-entry" type="button">Edit</button>
+        <button class="ghost-btn duplicate-entry" type="button">Duplicate</button>
+        <button class="danger-text delete-entry" type="button">Delete</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
