@@ -1,6 +1,7 @@
 const STORAGE_KEY = "communication-meter-entries-v1";
 const THEME_KEY = "communication-meter-theme-v1";
-const CACHE_BUST = "communication-meter-v2026-05-29d";
+const EXPORT_KEY = "communication-meter-last-export-v1";
+const CACHE_BUST = "communication-meter-v2026-05-30-data1";
 
 const durationLabels = {
   1: "<1 min",
@@ -48,7 +49,8 @@ const els = {
   exportBtn: document.getElementById("exportBtn"),
   importFile: document.getElementById("importFile"),
   clearAllBtn: document.getElementById("clearAllBtn"),
-  themeToggle: document.getElementById("themeToggle")
+  themeToggle: document.getElementById("themeToggle"),
+  lastExportLabel: document.getElementById("lastExportLabel")
 };
 
 let entries = loadEntries();
@@ -60,6 +62,7 @@ function initialize() {
   applyTheme();
   setDateTimeDefault();
   renderPresets();
+  renderLastExport();
   renderAll();
 
   document.querySelectorAll("[data-channel]").forEach((button) => {
@@ -370,10 +373,13 @@ function deleteEntry(id) {
 }
 
 function exportData() {
+  const exportedAt = new Date().toISOString();
   const payload = {
     app: "Communication Meter",
-    exportedAt: new Date().toISOString(),
+    version: CACHE_BUST,
+    exportedAt,
     localDateAtExport: nowLocalDateKey(),
+    localTimeAtExport: toLocalTime(new Date()),
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Local",
     entries
   };
@@ -384,6 +390,9 @@ function exportData() {
   link.download = `communication-meter-export-${nowLocalDateKey()}.json`;
   link.click();
   URL.revokeObjectURL(url);
+  localStorage.setItem(EXPORT_KEY, exportedAt);
+  renderLastExport();
+  showToast(`Exported ${entries.length} ${entries.length === 1 ? "entry" : "entries"}.`);
 }
 
 function importData(event) {
@@ -395,10 +404,19 @@ function importData(event) {
       const parsed = JSON.parse(reader.result);
       const importedEntries = Array.isArray(parsed) ? parsed : parsed.entries;
       if (!Array.isArray(importedEntries)) throw new Error("No entries array found.");
-      entries = importedEntries.map(normalizeImportedEntry);
+      const existingIds = new Set(entries.map((entry) => entry.id));
+      const added = [];
+      importedEntries.forEach((item) => {
+        const normalized = normalizeImportedEntry(item);
+        if (!existingIds.has(normalized.id)) {
+          added.push(normalized);
+          existingIds.add(normalized.id);
+        }
+      });
+      entries = [...added, ...entries];
       saveEntries();
       renderAll();
-      showToast("Import complete.");
+      showToast(`Import complete. Added ${added.length} ${added.length === 1 ? "entry" : "entries"}.`);
     } catch (error) {
       showToast("Import failed. Check JSON format.");
       console.error(error);
@@ -448,6 +466,12 @@ function toggleTheme() {
   const isDark = document.body.classList.toggle("dark");
   localStorage.setItem(THEME_KEY, isDark ? "dark" : "light");
   els.themeToggle.textContent = isDark ? "◐" : "☼";
+}
+
+function renderLastExport() {
+  if (!els.lastExportLabel) return;
+  const stamp = localStorage.getItem(EXPORT_KEY);
+  els.lastExportLabel.textContent = stamp ? `Last export: ${stamp.slice(0,10)} ${stamp.slice(11,16)}` : "Last export: never";
 }
 
 function showToast(message) {

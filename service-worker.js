@@ -1,4 +1,4 @@
-const CACHE_NAME = "communication-meter-v2026-05-29d";
+const CACHE_NAME = "communication-meter-v2026-05-30-data1";
 const ASSETS = [
   "./",
   "./index.html",

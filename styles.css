@@ -274,3 +274,42 @@ body.dark .entry-card { background: rgba(255,255,255,0.04); }
   .panel { padding: 14px; }
   .chip, .preset-btn, .primary-btn, .secondary-btn, .danger-btn { font-size: 0.95rem; }
 }
+
+/* Data module: mobile-safe export/import controls */
+.data-panel .actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.data-panel .actions > * {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  justify-content: center;
+}
+
+.data-panel .secondary-btn,
+.data-panel .danger-btn,
+.data-panel .import-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.small-note {
+  margin: 14px 0 0;
+  font-weight: 750;
+}
+
+@media (min-width: 640px) {
+  .data-panel .actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .data-panel .actions > * {
+    width: auto;
+  }
+}
